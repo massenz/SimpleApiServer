@@ -1,0 +1,14 @@
+# Conan Packaging configuration.
+# Created by M. Massenzio
+#
+# See the README for more information or http://conan.io
+
+[requires]
+glog/0.3.4@dwerner/testing
+gtest/1.8.0@lasote/stable
+
+[options]
+gtest:shared=False
+
+[generators]
+cmake

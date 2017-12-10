@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n ${COMMON_UTILS_DIR} ]]; then
+  UTILS="-DCOMMON_UTILS_DIR=${COMMON_UTILS_DIR}"
+fi
+
+if [[ -n ${LOCAL_INSTALL_DIR} ]]; then
+  INSTALL="-DINSTALL_DIR=${LOCAL_INSTALL_DIR}"
+fi
+
+
+BUILD_DIR="$(dirname $0)/../build"
+mkdir -p ${BUILD_DIR}
+cd ${BUILD_DIR}
+
+cmake  -DCMAKE_CXX_COMPILER=/usr/lib/ccache/clang++ ${UTILS} ${INSTALL} ..
+cmake --build . --target all -- -j 6
