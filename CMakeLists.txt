@@ -45,7 +45,6 @@ configure_file(
 
 # libmicrohttpd HTTP Server (https://www.gnu.org/software/libmicrohttpd)
 set(LIBMICROHTTPD_INSTALL ${INSTALL_DIR}/libmicrohttpd)
-set(DISTLIB_INSTALL ${INSTALL_DIR})
 include_directories(
         ${INCLUDE_DIR}
         ${PROJECT_BINARY_DIR}
@@ -85,7 +84,7 @@ if (NOT ${INSTALL_DIR})
             "${INSTALL_DIR}/include/${PROJECT_NAME}")
 
     # Install Library headers.
-    install(DIRECTORY ${SOURCE_DIR}/ DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}
+    install(DIRECTORY ${INCLUDE_DIR}/ DESTINATION ${INSTALL_DIR}/include/${PROJECT_NAME}
             FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
 else (NOT ${INSTALL_DIR})

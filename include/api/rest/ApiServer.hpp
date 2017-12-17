@@ -35,6 +35,7 @@ public:
   }
 
   const std::string body() const { return body_; }
+  void set_body(const std::string& body) { body_ = body; }
 };
 
 class Request : public BaseRequestResponse {
@@ -56,20 +57,29 @@ class Response : public BaseRequestResponse {
   std::string reason_;
 
 public:
-  Response(unsigned int status, std::string reason) : BaseRequestResponse{""},
-    status_code_{status}, reason_{std::move(reason)} { }
+  Response(unsigned int status, const std::string& reason, const std::string& body = "") :
+      BaseRequestResponse{body},
+      status_code_{status},
+      reason_{reason} { }
 
   Response(const Response& other) : BaseRequestResponse{other.body_},
                                     status_code_{other.status_code_},
-                                    reason_{other.reason_} { }
+                                    reason_{other.reason_} {
+    std::cout << "Copy constructor called for: " << other.body() << std::endl;
+    std::cout << "this one: " << body_ << std::endl;
+  }
 
   unsigned int status_code() const { return status_code_; }
   std::string reason() const { return reason_; }
-  std::string body() const { return body_; }
 
   static Response ok() { return Response(200, "OK"); }
   static Response created() { return Response(201, "CREATED"); }
-  static Response not_found() { return Response(404, "NOT_FOUND"); }
+  static Response bad_request(const std::string& err_msg = "") {
+    return Response(400, "BAD_REQUEST", err_msg);
+  }
+  static Response not_found(const std::string& err_msg = "") {
+    return Response(404, "NOT_FOUND", err_msg);
+  }
 };
 
 using Handler = std::function<Response(const Request&)>;
@@ -107,9 +117,7 @@ class ApiServer {
   }
 
 public:
-  explicit ApiServer(unsigned int port) : port_(port) {
-    handlers_["GET"] = ResourceHandlersMap{};
-  }
+  explicit ApiServer(unsigned int port) : port_(port) { }
 
   void Start() {
     LOG(INFO) << "Starting HTTP API Server on port " << std::to_string(port_);

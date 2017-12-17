@@ -61,7 +61,7 @@ int ApiServer::ConnectCallback(void *cls,
   VLOG(2) << "Resource: " << resource;
 
   if (strcmp(method, "GET") == 0) {
-    auto handlers_map = server->handlers_["GET"];
+    auto& handlers_map = server->handlers_["GET"];
     if (handlers_map.find(resource) != handlers_map.end()) {
 
       // TODO: Populate Request with whatever headers, etc. necessary
@@ -69,7 +69,7 @@ int ApiServer::ConnectCallback(void *cls,
       return sendResponse(connection, response);
     }
   } else if (strcmp(method, "POST") == 0) {
-    auto handlers_map = server->handlers_["POST"];
+    auto& handlers_map = server->handlers_["POST"];
     if (handlers_map.find(resource) != handlers_map.end()) {
       VLOG(2) << "Handler found for " << resource;
 
@@ -87,16 +87,14 @@ int ApiServer::ConnectCallback(void *cls,
         *upload_data_size = 0;
         return MHD_YES;
       }
-
-
       Response* response = con_info->response;
-      auto res_bytes = response->body().c_str();
+      auto body = response->body();
 
       VLOG(2) << "POST processing completed; returning ("
               << response->status_code() << "): "
-              << res_bytes;
-      auto mhd_response = MHD_create_response_from_buffer(strlen(res_bytes),
-          (void *) res_bytes, MHD_RESPMEM_MUST_COPY);
+              << body;
+      auto mhd_response = MHD_create_response_from_buffer(body.size(),
+          (void *) body.c_str(), MHD_RESPMEM_MUST_COPY);
       int ret = MHD_queue_response(connection, response->status_code(), mhd_response);
       MHD_destroy_response(mhd_response);
       return ret;
@@ -114,9 +112,9 @@ int ApiServer::ConnectCallback(void *cls,
 }
 
 int ApiServer::sendResponse(MHD_Connection *connection, const Response &response) {
-  auto response_body = response.body().c_str();
-  auto res = MHD_create_response_from_buffer(strlen(response_body),
-                                                 (void *) response_body,
+  auto response_body = response.body();
+  auto res = MHD_create_response_from_buffer(response_body.size(),
+                                                 (void *) response_body.c_str(),
                                                  MHD_RESPMEM_MUST_COPY);
   MHD_add_response_header(res, MHD_HTTP_HEADER_CONTENT_TYPE, kApplicationJson);
   int ret = MHD_queue_response(connection, response.status_code(), res);

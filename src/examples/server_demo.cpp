@@ -71,7 +71,9 @@ int main(int argc, const char *argv[]) {
 
   api::rest::ApiServer server(port);
   server.AddGet("demo", [](const api::rest::Request& req) {
-    return api::rest::Response::ok();
+    auto resp = api::rest::Response::ok();
+    resp.set_body("Response is valid");
+    return resp;
   });
   server.AddGet("stop", [=](const api::rest::Request& req) {
     ::stopped.store(true);

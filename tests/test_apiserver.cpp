@@ -40,6 +40,15 @@ protected:
       return Response::created();
     });
 
+    server_->AddGet("body", [] (const Request& request) -> Response {
+      LOG(INFO) << "GET Handler for 'test' invoked";
+      auto response = Response::ok();
+      response.set_body("Response Body");
+      return response;
+    });
+
+
+
     server_->Start();
   }
 
@@ -116,3 +125,22 @@ TEST_F(ApiServerTest, postValidEndpointReturns201) {
     FAIL() << e.what();
   }
 }
+
+
+TEST_F(ApiServerTest, getBody) {
+  try {
+    client_.get("http://localhost:7999/api/v1/body")
+        .on("error", [](request::Error &&err) {
+          FAIL() << "Could not connect to API Server: "
+                 << err.message;
+        }).on("response", [this](request::Response &&res) {
+          EXPECT_EQ("application/json", res.headers["content-type"]);
+          EXPECT_EQ(200, res.statusCode);
+          EXPECT_EQ("Response Body", res.str());
+        }).end();
+  } catch (const std::exception &e) {
+    FAIL() << e.what();
+  }
+}
+
+
