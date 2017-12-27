@@ -68,6 +68,16 @@ Then, building `libuv` fails for unknown reasons (again, downloading the library
     ln -s ${BASEDIR}/third_party/SimpleHttpRequest/lib/libhttp_parser.2.7.1.dylib \
         /usr/local/lib/libhttp_parser.2.7.dylib
 
+Finally, it appears that the configured location for the Conan-built `glog` library is not correctly set in the binaries; if you encounter a `dylib not found` error, do this:
+
+```shell
+  # Workaround for MacOS which fails to use Conan's install directories
+  LIBGLOG="${INSTALL_DIR}/lib/libglog.dylib"
+  if [[ $(uname -a | cut -f 1 -d ' ') == "Darwin" && ! -e ${LIBGLOG} ]]; then
+    find ~/.conan/data -iname libglog.dylib | head -n 1 | \
+        xargs -I % ln -s % ${LIBGLOG}
+  fi
+```
 
 ## HTTP Server
 
