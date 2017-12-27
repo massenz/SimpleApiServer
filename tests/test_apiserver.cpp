@@ -10,7 +10,7 @@
 
 #include <SimpleHttpRequest.hpp>
 
-#include "../include/api/rest/ApiServer.hpp"
+#include "api/rest/ApiServer.hpp"
 
 #include "tests.h"
 

@@ -43,15 +43,13 @@ configure_file(
 )
 
 
-# libmicrohttpd HTTP Server (https://www.gnu.org/software/libmicrohttpd)
-set(LIBMICROHTTPD_INSTALL ${INSTALL_DIR}/libmicrohttpd)
 include_directories(
         ${INCLUDE_DIR}
         ${PROJECT_BINARY_DIR}
-        ${LIBMICROHTTPD_INSTALL}/include
+        ${INSTALL_DIR}/include
 )
 
-link_directories(${LIBMICROHTTPD_INSTALL}/lib)
+link_directories(${INSTALL_DIR}/lib)
 
 set(SOURCES
         ${SOURCE_DIR}/api/rest/ApiServer.cpp
@@ -115,5 +113,4 @@ add_executable(server_demo
 )
 target_link_libraries(server_demo
         ${PROJECT_NAME}
-        distutils
 )
