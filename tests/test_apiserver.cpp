@@ -47,8 +47,6 @@ protected:
       return response;
     });
 
-
-
     server_->Start();
   }
 
@@ -141,6 +139,84 @@ TEST_F(ApiServerTest, getBody) {
   } catch (const std::exception &e) {
     FAIL() << e.what();
   }
+}
+
+
+// TODO: SimpleHttpRequest does not support sending query args, need to find a workaround.
+TEST_F(ApiServerTest, DISABLED_queryArgs) {
+    server_->AddGet("query", [](const Request &request) -> Response {
+        auto query = request.GetQueryArg("abc");
+        if (query == "test") {
+          return Response::ok();
+        }
+        return Response::bad_request("Invalid query arg: '" + query + "'");
+    });
+
+    try {
+        client_.get("http://localhost:7999/api/v1/query?abc=test&def=value")
+                .on("error", [](request::Error &&err) {
+                    FAIL() << "Could not connect to API Server: "
+                           << err.message;
+                }).on("response", [this](request::Response &&res) {
+                    EXPECT_EQ(200, res.statusCode) << res.str();
+                }).end();
+    } catch (const std::exception &e) {
+        FAIL() << e.what();
+    }
+}
+
+
+TEST_F(ApiServerTest, setHeaders) {
+
+    server_->AddGet("headers", [](const Request &request) {
+        auto response = Response::ok();
+        response.AddHeader("Content-Type", "plain/text");
+        response.AddHeader("x-custom", "custom-header:value");
+        return response;
+    });
+
+    try {
+        client_.get("http://localhost:7999/api/v1/headers")
+                .on("error", [](request::Error &&err) {
+                    FAIL() << "Could not connect to API Server: "
+                           << err.message;
+                }).on("response", [this](request::Response &&res) {
+                    EXPECT_EQ("plain/text", res.headers["content-type"]);
+                    EXPECT_EQ(200, res.statusCode);
+                    EXPECT_EQ("custom-header:value", res.headers["x-custom"]);
+                }).end();
+    } catch (const std::exception &e) {
+        FAIL() << e.what();
+    }
+}
+
+
+TEST_F(ApiServerTest, postContentType) {
+
+    server_->AddPost("entity", [](const Request &request) -> Response {
+        if (request.body() != "Some random value") {
+          return Response::bad_request("Unexpected body: " + request.body());
+        }
+
+        auto response = Response::created();
+        response.AddHeader("Content-Type", "plain/text");
+        response.set_body("plain text body");
+        return response;
+    });
+
+    try {
+        client_.post("http://localhost:7999/api/v1/entity", "Some random value")
+                .on("error", [](request::Error &&err) {
+                    FAIL() << "Could not connect to API Server: "
+                           << err.message;
+                }).on("response", [this](request::Response &&res) {
+                    EXPECT_EQ("plain/text", res.headers["content-type"]);
+                    EXPECT_EQ(201, res.statusCode);
+                    EXPECT_EQ("plain text body", res.str());
+                }).end();
+    } catch (const std::exception &e) {
+        FAIL() << e.what();
+    }
 }
 
 

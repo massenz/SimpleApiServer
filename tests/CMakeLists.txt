@@ -19,20 +19,24 @@ link_directories(${SIMPLE_HTTP}/lib)
 
 set(UNIT_TESTS
         ${TESTS_DIR}/test_apiserver.cpp
+        ${TESTS_DIR}/test_request_response.cpp
 )
 
 # Add the build directory to the library search path
 link_directories(${CMAKE_BINARY_DIR})
 
 add_executable(unit_tests
+        ${SOURCES}
         ${UNIT_TESTS}
         tests.h
         all_tests.cpp
 )
 target_link_libraries(unit_tests
+        glog
         gtest
-        apiserver
         http_parser
+        microhttpd
+        pthread
         uv
 )
 

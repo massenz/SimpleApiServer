@@ -109,8 +109,9 @@ link_directories(
 #
 include_directories(${INSTALL_DIR}/include)
 add_executable(server_demo
+        ${SOURCES}
         ${EXAMPLES_DIR}/server_demo.cpp
 )
 target_link_libraries(server_demo
-        ${PROJECT_NAME}
+        ${LIBS}
 )
