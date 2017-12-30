@@ -4,7 +4,12 @@ project(apiserver_test)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
 
 # Conan Packaging support
-include(../.conan/conanbuildinfo.cmake)
+# Conan Packaging support
+if(APPLE)
+    include(../mac.conan/conanbuildinfo.cmake)
+else(APPLE)
+    include(../.conan/conanbuildinfo.cmake)
+endif(APPLE)
 conan_basic_setup()
 
 ###
@@ -19,20 +24,24 @@ link_directories(${SIMPLE_HTTP}/lib)
 
 set(UNIT_TESTS
         ${TESTS_DIR}/test_apiserver.cpp
+        ${TESTS_DIR}/test_request_response.cpp
 )
 
 # Add the build directory to the library search path
 link_directories(${CMAKE_BINARY_DIR})
 
 add_executable(unit_tests
+        ${SOURCES}
         ${UNIT_TESTS}
         tests.h
         all_tests.cpp
 )
 target_link_libraries(unit_tests
+        glog
         gtest
-        apiserver
         http_parser
+        microhttpd
+        pthread
         uv
 )
 

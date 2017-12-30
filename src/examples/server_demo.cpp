@@ -67,8 +67,16 @@ int main(int argc, const char *argv[]) {
 
   api::rest::ApiServer server(port);
   server.AddGet("demo", [](const api::rest::Request& req) {
+    auto query = req.GetQueryArg("q");
+
     auto resp = api::rest::Response::ok();
-    resp.set_body("Response is valid");
+    resp.AddHeader("Content-Type", "text/plain");
+
+    if (!query.empty()) {
+      resp.set_body("Your query: " + query);
+    } else {
+      resp.set_body("Use the `q` query argument to ask me anything");
+    }
     return resp;
   });
   server.AddGet("stop", [=](const api::rest::Request& req) {

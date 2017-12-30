@@ -9,44 +9,71 @@
 #include <map>
 #include <utility>
 
+#include <glog/logging.h>
 
 namespace api {
 namespace rest {
 
 class HttpCannotStartError : public std::exception {
-
 };
 
 /** API Version */
 extern const char *const kApiVersionPrefix;
 
+
+using QueryArgs = std::map<std::string, std::string>;
+
+// TODO: headers should actually be a multimap<string, string>
+using Headers = std::map<std::string, std::string>;
+
 class BaseRequestResponse {
-protected:
-  std::vector<std::pair<std::string, std::string>> headers;
+ protected:
+  Headers headers_;
   std::string body_;
 
-  BaseRequestResponse(const BaseRequestResponse&) = delete;
   BaseRequestResponse() = default;
-  explicit BaseRequestResponse(std::string body) : body_(std::move(body)) { }
 
-public:
-  void AddHeader(const std::string& header, const std::string& value) {
-    headers.push_back(std::make_pair(header, value));
-  }
+  explicit BaseRequestResponse(std::string body) : body_(std::move(body)), headers_{} {}
+
+ public:
+  BaseRequestResponse(const BaseRequestResponse &) = delete;
 
   const std::string body() const { return body_; }
-  void set_body(const std::string& body) { body_ = body; }
+
+  void set_body(const std::string &body) { body_ = body; }
+
+  const Headers& headers() const { return headers_; }
+
+  void AddHeader(const std::string &header, const std::string &value) {
+    headers_.insert(std::make_pair(header, value));
+  }
+
+  std::string GetHeader(const std::string &header) {
+    try {
+      return headers_.at(header);
+    } catch (std::out_of_range& ex) {
+      return "";
+    }
+  }
 };
 
 class Request : public BaseRequestResponse {
-public:
-  explicit Request(const std::string& request = "") : BaseRequestResponse(request) { }
 
-  const std::string GetHeader(const std::string &header) {
-    for(auto pair : headers) {
-      if (pair.first == header) {
-        return pair.second;
-      }
+  QueryArgs query_args_;
+
+ public:
+  explicit Request(const std::string &body = "") :
+      BaseRequestResponse{body}, query_args_{} { }
+
+  const QueryArgs& query_args() const { return query_args_; }
+
+  void AddQueryArg(const std::string& query, const std::string& arg) {
+    query_args_[query] = arg;
+  }
+
+  std::string GetQueryArg(const std::string& query) const {
+    if (query_args_.count(query) > 0) {
+      return query_args_.at(query);
     }
     return "";
   }
@@ -56,33 +83,39 @@ class Response : public BaseRequestResponse {
   unsigned int status_code_;
   std::string reason_;
 
-public:
-  Response(unsigned int status, const std::string& reason, const std::string& body = "") :
+ public:
+  Response(unsigned int status, const std::string &reason, const std::string &body = "") :
       BaseRequestResponse{body},
       status_code_{status},
-      reason_{reason} { }
+      reason_{reason} {}
 
-  Response(const Response& other) : BaseRequestResponse{other.body_},
+  Response(const Response &other) : BaseRequestResponse{other.body_},
                                     status_code_{other.status_code_},
-                                    reason_{other.reason_} {
-    std::cout << "Copy constructor called for: " << other.body() << std::endl;
-    std::cout << "this one: " << body_ << std::endl;
+                                    reason_{other.reason_}
+  {
+    for (auto &header : other.headers()) {
+      headers_[header.first] = header.second;
+    }
   }
 
   unsigned int status_code() const { return status_code_; }
+
   std::string reason() const { return reason_; }
 
   static Response ok() { return Response(200, "OK"); }
+
   static Response created() { return Response(201, "CREATED"); }
-  static Response bad_request(const std::string& err_msg = "") {
+
+  static Response bad_request(const std::string &err_msg = "") {
     return Response(400, "BAD_REQUEST", err_msg);
   }
-  static Response not_found(const std::string& err_msg = "") {
+
+  static Response not_found(const std::string &err_msg = "") {
     return Response(404, "NOT_FOUND", err_msg);
   }
 };
 
-using Handler = std::function<Response(const Request&)>;
+using Handler = std::function<Response(const Request &)>;
 
 using ResourceHandlersMap = std::map<std::string, Handler>;
 
@@ -102,22 +135,25 @@ class ApiServer {
   std::map<std::string, ResourceHandlersMap> handlers_;
 
   static int ConnectCallback(void *cls, struct MHD_Connection *connection,
-                      const char *url,
-                      const char *method,
-                      const char *version,
-                      const char *upload_data,
-                      size_t *upload_data_size,
-                      void **con_cls);
+                             const char *url,
+                             const char *method,
+                             const char *version,
+                             const char *upload_data,
+                             size_t *upload_data_size,
+                             void **con_cls);
 
-  void AddMethodHandler(const std::string& method, const std::string& resource,
-                        const Handler& handler);
+  static int HeadersQueryargsCallback(void *request, enum MHD_ValueKind kind,
+                                      const char *key, const char *value);
 
-  bool HasMethod(const std::string& method) const {
+  void AddMethodHandler(const std::string &method, const std::string &resource,
+                        const Handler &handler);
+
+  bool HasMethod(const std::string &method) const {
     return handlers_.find(method) != handlers_.end();
   }
 
-public:
-  explicit ApiServer(unsigned int port) : port_(port) { }
+ public:
+  explicit ApiServer(unsigned int port) : port_(port) {}
 
   void Start() {
     LOG(INFO) << "Starting HTTP API Server on port " << std::to_string(port_);
@@ -126,7 +162,7 @@ public:
                               nullptr,    // Allow all clients to connect
                               nullptr,
                               ApiServer::ConnectCallback,
-                              (void *)this,       // The GFD as the extra arguments.
+                              (void *) this,       // The GFD as the extra arguments.
                               MHD_OPTION_END);  // No extra options to daemon either.
 
     if (httpd_ == nullptr) {
@@ -159,7 +195,7 @@ public:
     AddMethodHandler("DELETE", resource, handler);
   }
 
-  std::ostream& ListAllHandlers(std::ostream& out) const {
+  std::ostream &ListAllHandlers(std::ostream &out) const {
     out << "====\nAll handlers for server on port: " << port_ << "\n====\n";
     for (auto methodHandlers : handlers_) {
       out << "Method: " << methodHandlers.first << std::endl;
@@ -173,8 +209,8 @@ public:
   }
 
   static int sendResponse(MHD_Connection *connection, const Response &response);
+  static int ResourceNotFound(MHD_Connection *connection, const std::string &resource);
 };
-
 
 } // namespace rest
 } // namespace swim

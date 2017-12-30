@@ -23,7 +23,11 @@ ELSE (${COMMONS_FILE} STREQUAL NOTFOUND)
 ENDIF (${COMMONS_FILE} STREQUAL NOTFOUND)
 
 # Conan Packaging support
-include(.conan/conanbuildinfo.cmake)
+if(APPLE)
+    include(mac.conan/conanbuildinfo.cmake)
+else(APPLE)
+    include(.conan/conanbuildinfo.cmake)
+endif(APPLE)
 conan_basic_setup()
 
 set(RELEASE_STRING "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}-${BUILD_ID}")
@@ -109,8 +113,9 @@ link_directories(
 #
 include_directories(${INSTALL_DIR}/include)
 add_executable(server_demo
+        ${SOURCES}
         ${EXAMPLES_DIR}/server_demo.cpp
 )
 target_link_libraries(server_demo
-        ${PROJECT_NAME}
+        ${LIBS}
 )
