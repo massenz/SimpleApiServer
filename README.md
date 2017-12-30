@@ -34,13 +34,40 @@ listed in `conanfile.text`.
 
 This is done as follows:
 
-```bash
+```shell
 sudo -H pip install -U conan
 mkdir .conan && cd .conan
 conan install .. -s compiler=clang -s compiler.version=4.0 \
     -s compiler.libcxx=libstdc++11 --build=missing
 ```
+
 See [conan.io](http://conan.io) for more information.
+
+## MacOS
+
+Building this project on MacOS turns out to be a considerable pain.
+
+For a start, for reasons completely unclear, using Conan to build `gtest` fails with missing references, even though the library (and include files) are found in the correct places: ultimately, the only fix I could find was to remove the reference to `gtest` from `conanfile.txt` and building `gtest` from sources.
+
+Download [gtest 1.8.0 tarbal](https://github.com/google/googletest/archive/release-1.8.0.tar.gz) to your local machine, untar into `$GTEST_DIR` (see below) and build it with the following:
+
+```shell
+GTEST_DIR=${LOCAL_DIR}/gtest-1.8.0
+
+cd ${GTEST_DIR}
+mkdir build && cd build
+cmake -G"Unix Makefiles" ..
+make
+
+ln -s ${GTEST_DIR}/googletest/include/gtest ${INSTALL_DIR}/include/gtest
+ln -s ${GTEST_DIR}/build/googlemock/gtest/libgtest.a ${INSTALL_DIR}/lib/libgtest.a
+```
+
+Then, building `libuv` fails for unknown reasons (again, downloading the library, and building it fails to generate the `.dylib`) however, using `brew` it is possible to generate the necessary files (they have been added to the `third_party` folder for ease of build - and also because I would not want to inflict `brew` onto anyone); however, even if the build then succeeds, executing the tests fails, as the library location is "hard-coded" as in `/usr/local/lib`; thus this is also necessary:
+
+    ln -s ${BASEDIR}/third_party/SimpleHttpRequest/lib/libhttp_parser.2.7.1.dylib \
+        /usr/local/lib/libhttp_parser.2.7.dylib
+
 
 ## HTTP Server
 
@@ -52,11 +79,11 @@ This can be either installed directly as a package under most Linux distribution
 wget http://open-source-box.org/libmicrohttpd/libmicrohttpd-0.9.55.tar.gz
 tar xfz libmicrohttpd-0.9.55.tar.gz
 cd libmicrohttpd-0.9.55/
-./configure --prefix ${INSTALL}/libmicrohttpd
+./configure --prefix ${INSTALL}
 make && make install
 ```
 
-The include file and libraries will be, respectively, in `${INSTALL}/libmicrohttpd/include` and `${INSTALL}/libmicrohttpd/lib` folders.
+The include file and libraries will be, respectively, in `${INSTALL}/include` and `${INSTALL}/lib` folders.
 
 See [the tutorial](https://www.gnu.org/software/libmicrohttpd/tutorial.html) for more information about usage.
 
@@ -74,9 +101,9 @@ or to simply run a subset of the tests with full debug logging:
 See also the other binaries in the `build/bin` folder for more options.
 
 Define the following env vars to specify, respectively, an install dir for libs & includes; and
-a shared cmake utility functions file:
+a shared cmake utility functions file (`common.cmake`):
 
-    ${LOCAL_INSTALL_DIR}
+    ${INSTALL_DIR}
     ${COMMON_UTILS_DIR}
 
 

@@ -1,7 +1,6 @@
 # This file (c) 2016-2017 AlertAvert.com.  All rights reserved.
 
 project(apiserver_test)
-enable_testing()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
 
 # Conan Packaging support
@@ -18,12 +17,6 @@ include_directories(${SIMPLE_HTTP}/include
 )
 link_directories(${SIMPLE_HTTP}/lib)
 
-
-find_library(GTEST gtest ${INSTALL_DIR}/lib)
-if (${GTEST} STREQUAL GTEST-NOTFOUND)
-    message(FATAL_ERROR "Could not locate a valid Google Test library installed.")
-endif (${GTEST} STREQUAL GTEST-NOTFOUND)
-
 set(UNIT_TESTS
         ${TESTS_DIR}/test_apiserver.cpp
 )
@@ -37,7 +30,7 @@ add_executable(unit_tests
         all_tests.cpp
 )
 target_link_libraries(unit_tests
-        ${GTEST}
+        gtest
         apiserver
         http_parser
         uv

@@ -16,12 +16,16 @@ Makefile
 cmake_install.cmake
 gen/
 
-# Recommended build directory
+# Build directories
 build/
+mac.build/
 Debug/
 .conan/
+mac.conan/
 
 # Compiler intermediate files
 .o
 .so
 .la
+.dylib
+

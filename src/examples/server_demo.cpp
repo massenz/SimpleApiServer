@@ -9,7 +9,6 @@
 
 #include <glog/logging.h>
 
-#include <zmq.hpp>
 #include <atomic>
 #include <api/rest/ApiServer.hpp>
 
@@ -18,16 +17,13 @@
 #include "distlib/utils/ParseArgs.hpp"
 
 
-using namespace zmq;
-
-
 namespace {
 
 /**
  * Prints out usage instructions for this application.
  */
 void usage() {
-  std::cout << "Usage: " << program_invocation_short_name << " --port=PORT"
+  std::cout << "Usage: server_demo --port=PORT"
             << "\t\t[--debug] [--version] [--help]\n\n"
             << "\t--debug    verbose output (LOG_v = 2)\n"
             << "\t--help     prints this message and exits\n"
