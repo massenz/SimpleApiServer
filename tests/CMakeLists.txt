@@ -4,7 +4,12 @@ project(apiserver_test)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
 
 # Conan Packaging support
-include(../.conan/conanbuildinfo.cmake)
+# Conan Packaging support
+if(APPLE)
+    include(../mac.conan/conanbuildinfo.cmake)
+else(APPLE)
+    include(../.conan/conanbuildinfo.cmake)
+endif(APPLE)
 conan_basic_setup()
 
 ###
