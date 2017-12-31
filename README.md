@@ -1,10 +1,10 @@
 # SimpleApiServer - C++ REST Server
 
 
- apiserver  | 0.1.0
+ apiserver  | 0.2.0
 :-------    | ---------------------------------:
  Author     | [M. Massenzio](https://www.linkedin.com/in/mmassenzio)
- Updated    | 2017-12-09
+ Updated    | 2017-12-30
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
