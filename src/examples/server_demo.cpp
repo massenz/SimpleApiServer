@@ -23,14 +23,11 @@ namespace {
  * Prints out usage instructions for this application.
  */
 void usage() {
-  std::cout << "Usage: server_demo --port=PORT"
-            << "\t\t[--debug] [--version] [--help]\n\n"
+  std::cout << "Usage: server_demo --port=PORT [--debug] [--version] [--help]\n\n"
             << "\t--debug    verbose output (LOG_v = 2)\n"
             << "\t--help     prints this message and exits\n"
-            << "\t--version  prints the version string for this demo and third-party libraries "
-               "and exits\n\n"
-            << "\tPORT       an int specifying the port the server will listen on (`receive`), or\n"
-            << "\t           connect to (`send`)\n\n";
+            << "\t--version  prints the version string and exits\n\n"
+            << "\tPORT       an int specifying the port the server will listen on\n\n";
 }
 
 std::atomic<bool> stopped(false);
