@@ -1,10 +1,10 @@
 # SimpleApiServer - C++ REST Server
 
 
- apiserver  | 0.2.0
+ apiserver  | 0.2.1
 :-------    | ---------------------------------:
  Author     | [M. Massenzio](https://www.linkedin.com/in/mmassenzio)
- Updated    | 2017-12-30
+ Updated    | 2017-12-31
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -23,6 +23,8 @@ Hence, the goals of this project are:
 - provide a very simple programming model, based on modern C++ concepts (most notably, lambdas).
 
 See the [Demo Server](#demo-server) section below for usage examples.
+
+The full API documentation (created with [Doxygen](http://www.stack.nl/~dimitri/doxygen/index.html)) is available on [the Project's GH-Pages](https://massenz.github.io/SimpleApiServer/).
 
 
 # Install & Build

@@ -13,7 +13,7 @@ include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 # Version number
 set(RELEASE_MAJOR 0)
 set(RELEASE_MINOR 2)
-set(RELEASE_PATCH 0)
+set(RELEASE_PATCH 1)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
     message(WARNING "Not using CMake utilities")
@@ -30,7 +30,8 @@ else(APPLE)
 endif(APPLE)
 conan_basic_setup()
 
-set(RELEASE_STRING "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}-${BUILD_ID}")
+set(VERSION_STRING "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}")
+set(RELEASE_STRING "${VERSION_STRING}-${BUILD_ID}")
 message(STATUS "Building Release: ${RELEASE_STRING}")
 
 
@@ -64,6 +65,11 @@ set(LIBS
         microhttpd
         pthread
 )
+
+##
+# Utility program to print version string
+##
+add_executable(get_version ${SOURCE_DIR}/get_version.cpp)
 
 ##
 # libapiserver.so
