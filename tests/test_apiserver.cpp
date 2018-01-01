@@ -142,14 +142,15 @@ TEST_F(ApiServerTest, getBody) {
 }
 
 
-// TODO: SimpleHttpRequest does not support sending query args, need to find a workaround.
-TEST_F(ApiServerTest, DISABLED_queryArgs) {
+TEST_F(ApiServerTest, queryArgs) {
     server_->AddGet("query", [](const Request &request) -> Response {
         auto query = request.GetQueryArg("abc");
-        if (query == "test") {
+        auto value = request.GetQueryArg("def");
+        if ((query == "test") && (value == "value")) {
           return Response::ok();
         }
-        return Response::bad_request("Invalid query arg: '" + query + "'");
+        return Response::bad_request("Invalid query args: '" +
+          query + "', '" + value + "'");
     });
 
     try {
