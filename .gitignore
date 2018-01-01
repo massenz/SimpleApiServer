@@ -28,4 +28,5 @@ mac.conan/
 .so
 .la
 .dylib
+bin/get_version
 

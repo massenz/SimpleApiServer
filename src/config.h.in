@@ -9,4 +9,5 @@
 
 #define BUILD_ID "@BUILD_ID@"
 
+#define VERSION_STR "@VERSION_STRING@"
 #define RELEASE_STR "@RELEASE_STRING@"
