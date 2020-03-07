@@ -1,36 +1,12 @@
 #!/bin/bash
 
-set -e
+set -ex
+source $(dirname $0)/env.sh
 
-# We need the absolute path to copy the `get_version` executable in the correct place
-basedir=$(python -c "import os; print(os.path.abspath('$(dirname $0)/..'))")
+mkdir -p ${BUILDDIR}
+cd ${BUILDDIR}
 
+conan install ${BASEDIR} -if=${BUILDDIR} -pr=default --build=missing
 
-if [[ -n ${COMMON_UTILS_DIR} ]]; then
-  UTILS="-DCOMMON_UTILS_DIR=${COMMON_UTILS_DIR}"
-fi
-
-if [[ -n ${INSTALL_DIR} ]]; then
-  INSTALL="-DINSTALL_DIR=${INSTALL_DIR}"
-fi
-
-OS_NAME=$(uname -a | cut -f 1 -d ' ')
-if [[ ${OS_NAME} == "Linux" ]]; then
-    BUILD_DIR="${basedir}/build"
-elif [[ ${OS_NAME} == "Darwin" ]]; then
-    BUILD_DIR="${basedir}/mac.build"
-else
-    echo "[ERROR] Unsupported Linux variant: ${OS_NAME}"
-    exit 1
-fi
-
-mkdir -p ${BUILD_DIR}
-cd ${BUILD_DIR}
-
-cmake  ${UTILS} ${INSTALL} ..
+cmake  -DCMAKE_CXX_COMPILER=${CLANG} ${UTILS} ..
 cmake --build . --target all -- -j 6
-make install
-
-if [[ -e bin/get_version ]]; then
-    cp bin/get_version ${basedir}/bin/
-fi

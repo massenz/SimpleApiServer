@@ -1,27 +1,17 @@
 #!/bin/bash
 
 set -eu
-
-VERBOSE=${1:-}
+source $(dirname $0)/env.sh
 
 function run_tests {
-    ./tests/bin/unit_tests
+    ./tests/bin/unit_tests $@
 }
 
-OS_NAME=$(uname -a | cut -f 1 -d ' ')
-if [[ ${OS_NAME} == "Linux" ]]; then
-    BUILD_DIR="$(dirname $0)/../build"
-elif [[ ${OS_NAME} == "Darwin" ]]; then
-    BUILD_DIR="$(dirname $0)/../mac.build"
-else
-    echo "[ERROR] Unsupported Linux variant: ${OS_NAME}"
-    exit 1
-fi
-
-cd ${BUILD_DIR}
-if [[ ${VERBOSE} == "-v" ]]; then
+if [[ ${1:-} == "-v" ]]; then
     export GLOG_v=2
     export GLOG_logtostderr=true
+    shift 1
 fi
 
-time run_tests
+cd ${BUILDDIR}
+time run_tests $@

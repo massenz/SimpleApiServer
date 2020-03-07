@@ -3,24 +3,21 @@
 project(apiserver_test)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
 
+enable_testing()
+
 # Conan Packaging support
-# Conan Packaging support
-if(APPLE)
-    include(../mac.conan/conanbuildinfo.cmake)
-else(APPLE)
-    include(../.conan/conanbuildinfo.cmake)
-endif(APPLE)
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-###
-# Third Party libraries
-set(THIRD_PARTY ${CMAKE_SOURCE_DIR}/third_party)
-set(SIMPLE_HTTP ${THIRD_PARTY}/SimpleHttpRequest)
+find_library(GTEST gtest ${INSTALL_DIR}/lib)
+if (${GTEST} STREQUAL GTEST-NOTFOUND)
+    message(FATAL_ERROR "Could not locate a valid Google Test library installed.")
+endif (${GTEST} STREQUAL GTEST-NOTFOUND)
 
-include_directories(${SIMPLE_HTTP}/include
-        ${SIMPLE_HTTP}/include/uv
+
+include_directories(
+        ${INSTALL_DIR}/include
 )
-link_directories(${SIMPLE_HTTP}/lib)
 
 set(UNIT_TESTS
         ${TESTS_DIR}/test_apiserver.cpp
@@ -28,7 +25,10 @@ set(UNIT_TESTS
 )
 
 # Add the build directory to the library search path
-link_directories(${CMAKE_BINARY_DIR})
+link_directories(
+        ${CMAKE_BINARY_DIR}/lib
+        ${INSTALL_DIR}/lib
+)
 
 add_executable(unit_tests
         ${SOURCES}
@@ -37,8 +37,8 @@ add_executable(unit_tests
         all_tests.cpp
 )
 target_link_libraries(unit_tests
+        ${GTEST}
         glog
-        gtest
         http_parser
         microhttpd
         pthread

@@ -1,10 +1,12 @@
 # SimpleApiServer - C++ REST Server
 
 
- apiserver  | 0.2.1
-:-------    | ---------------------------------:
- Author     | [M. Massenzio](https://www.linkedin.com/in/mmassenzio)
- Updated    | 2017-12-31
+Project   | apiserver
+:---      | ---:
+Author    | [M. Massenzio](https://bitbucket.org/marco)
+Release   | 0.2.0
+Updated   | 2020-03-07
+
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -27,59 +29,78 @@ See the [Demo Server](#demo-server) section below for usage examples.
 The full API documentation (created with [Doxygen](http://www.stack.nl/~dimitri/doxygen/index.html)) is available on [the Project's GH-Pages](https://massenz.github.io/SimpleApiServer/).
 
 
-# Install & Build
+# Usage
 
-## Conan packages
+We define the concept of a `Handler` (in practice, a Lambda function) that will be registered to handle a particular `{endpoint, method}` HTTP request:
 
-To build the project, you need to first donwload/build the necessary binary dependencies, as
-listed in `conanfile.text`.
-
-This is done as follows:
-
-```shell
-sudo -H pip install -U conan
-mkdir .conan && cd .conan
-conan install .. -s compiler=clang -s compiler.version=4.0 \
-    -s compiler.libcxx=libstdc++11 --build=missing
+```cpp
+using Handler = std::function<Response(const Request &)>;
 ```
 
-See [conan.io](http://conan.io) for more information.
+The `ApiServer` class adds utility methods to register handlers:
 
-## MacOS
+```cpp
+  void AddGet(const std::string &resource, const Handler &handler) {
+    AddMethodHandler("GET", resource, handler);
+  }
 
-Building this project on MacOS turns out to be a considerable pain.
+  void AddPost(const std::string &resource, const Handler &handler) {
+    AddMethodHandler("POST", resource, handler);
+  }
 
-For a start, for reasons completely unclear, using Conan to build `gtest` fails with missing references, even though the library (and include files) are found in the correct places: ultimately, the only fix I could find was to remove the reference to `gtest` from `conanfile.txt` and building `gtest` from sources.
+  void AddPut(const std::string &resource, const Handler &handler) {
+    AddMethodHandler("PUT", resource, handler);
+  }
 
-Download [gtest 1.8.0 tarbal](https://github.com/google/googletest/archive/release-1.8.0.tar.gz) to your local machine, untar into `$GTEST_DIR` (see below) and build it with the following:
-
-```shell
-GTEST_DIR=${LOCAL_DIR}/gtest-1.8.0
-
-cd ${GTEST_DIR}
-mkdir build && cd build
-cmake -G"Unix Makefiles" ..
-make
-
-ln -s ${GTEST_DIR}/googletest/include/gtest ${INSTALL_DIR}/include/gtest
-ln -s ${GTEST_DIR}/build/googlemock/gtest/libgtest.a ${INSTALL_DIR}/lib/libgtest.a
+  void AddDelete(const std::string &resource, const Handler &handler) {
+    AddMethodHandler("DELETE", resource, handler);
+  }
 ```
 
-Then, building `libuv` fails for unknown reasons (again, downloading the library, and building it fails to generate the `.dylib`) however, using `brew` it is possible to generate the necessary files (they have been added to the `third_party` folder for ease of build - and also because I would not want to inflict `brew` onto anyone); however, even if the build then succeeds, executing the tests fails, as the library location is "hard-coded" as in `/usr/local/lib`; thus this is also necessary:
+A `Handler` receives a `Request` (containing, as appropriate, headers, query args and a body) and will return a `Response` (equally containing headers and a body, as well as a status code).
+  
+For an example of adding REST endpoints to your program, see the `server_demo.cpp` example:
 
-    ln -s ${BASEDIR}/third_party/SimpleHttpRequest/lib/libhttp_parser.2.7.1.dylib \
-        /usr/local/lib/libhttp_parser.2.7.dylib
+```cpp
+  api::rest::ApiServer server(port);
+  server.AddGet("demo", [](const api::rest::Request& req) {
+    auto query = req.GetQueryArg("q");
 
-Finally, it appears that the configured location for the Conan-built `glog` library is not correctly set in the binaries; if you encounter a `dylib not found` error, do this:
+    auto resp = api::rest::Response::ok();
+    resp.AddHeader("Content-Type", "text/plain");
 
-```shell
-# Workaround for MacOS which fails to use Conan's install directories
-LIBGLOG="${INSTALL_DIR}/lib/libglog.dylib"
-if [[ $(uname -a | cut -f 1 -d ' ') == "Darwin" && ! -e ${LIBGLOG} ]]; then
-find ~/.conan/data -iname libglog.dylib | head -n 1 | \
-    xargs -I % ln -s % ${LIBGLOG}
-fi
-```
+    if (!query.empty()) {
+      resp.set_body("Your query: " + query);
+    } else {
+      resp.set_body("Use the `q` query argument to ask me anything");
+    }
+    return resp;
+  });
+  server.AddGet("stop", [=](const api::rest::Request& req) {
+    ::stopped.store(true);
+    return api::rest::Response::ok();
+  });
+
+  server.Start();
+  ```
+  
+# API Documentation
+
+All the classes are documented using [Doxygen](http://www.doxygen.nl/); simply run
+
+    $ doxygen
+    
+from the project's top directory, and the HTML docs will be installed in `docs/apidocs` (this folder is explicityly ignored by `git`).
+
+
+# Build & Test
+
+## Installation directory
+
+In order to find its dependencies (most notably, `libmicrohttpd`) and to be found by dependent projects, we need to define an installation directory in `$INSTALL_DIR`; make sure it is defined in your environment and exists.
+
+Header files and shared libraries will be installed/looked up in `$INSTALL_DIR/include` and `$INSTALL_DIR/lib` respectively.
+
 
 ## HTTP Server
 
@@ -91,16 +112,14 @@ This can be either installed directly as a package under most Linux distribution
 wget http://open-source-box.org/libmicrohttpd/libmicrohttpd-0.9.55.tar.gz
 tar xfz libmicrohttpd-0.9.55.tar.gz
 cd libmicrohttpd-0.9.55/
-./configure --prefix ${INSTALL}
+./configure --prefix ${INSTALL_DIR}
 make && make install
 ```
-
-The include file and libraries will be, respectively, in `${INSTALL}/include` and `${INSTALL}/lib` folders.
 
 See [the tutorial](https://www.gnu.org/software/libmicrohttpd/tutorial.html) for more information about usage.
 
 
-## Build & testing
+## Build & Test
 
 To build and test it:
 
@@ -108,21 +127,6 @@ To build and test it:
 
 or to simply run a subset of the tests with full debug logging:
 
-    $ GLOG_v=2 ./build/tests/bin/unit_tests --gtest_filter=FilterThis*
+    $ ./bin/test -v --gtest_filter=FilterThis*
 
-See also the other binaries in the `build/bin` folder for more options.
-
-Define the following env vars to specify, respectively, an install dir for libs & includes; and
-a shared cmake utility functions file (`common.cmake`):
-
-    ${INSTALL_DIR}
-    ${COMMON_UTILS_DIR}
-
-
-# API Documentations
-
-All the classes are documented using [Doxygen](https://massenz.github.io/apiserver/).
-
-# Demo server
-
-  TODO
+A shared cmake utility functions file ([`common.cmake`](#)) will be included, if found in `${COMMON_UTILS_DIR}`.

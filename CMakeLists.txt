@@ -22,12 +22,28 @@ ELSE (${COMMONS_FILE} STREQUAL NOTFOUND)
     get_build_id(BUILD_ID)
 ENDIF (${COMMONS_FILE} STREQUAL NOTFOUND)
 
+##
+#
+# Installation directory; this is both used to access
+# required libraries (microhttpd, distutils) as well as
+# to install the compiled artifacts.
+#
+# The INSTALL_DIR env variable must be set, unless -DINSTALL_DIR is used.
+if(NOT DEFINED INSTALL_DIR)
+    if(DEFINED ENV{INSTALL_DIR})
+        set(INSTALL_DIR $ENV{INSTALL_DIR})
+    else()
+        message(FATAL_ERROR
+                "INSTALL_DIR should be defined as an environment variable, or via -D notation")
+    endif()
+endif()
+
+if(NOT DEFINED LIBMICROHTTPD_INSTALL)
+    set(LIBMICROHTTPD_INSTALL ${INSTALL_DIR}/libmicrohttpd)
+endif()
+
 # Conan Packaging support
-if(APPLE)
-    include(mac.conan/conanbuildinfo.cmake)
-else(APPLE)
-    include(.conan/conanbuildinfo.cmake)
-endif(APPLE)
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
 set(VERSION_STRING "${RELEASE_MAJOR}.${RELEASE_MINOR}.${RELEASE_PATCH}")
@@ -52,9 +68,13 @@ include_directories(
         ${INCLUDE_DIR}
         ${PROJECT_BINARY_DIR}
         ${INSTALL_DIR}/include
+        ${LIBMICROHTTPD_INSTALL}/include
 )
 
-link_directories(${INSTALL_DIR}/lib)
+link_directories(
+        ${INSTALL_DIR}/lib
+        ${LIBMICROHTTPD_INSTALL}/lib
+)
 
 set(SOURCES
         ${SOURCE_DIR}/api/rest/ApiServer.cpp
@@ -103,15 +123,10 @@ endif (NOT ${INSTALL_DIR})
 # Unit tests build is defined in the tests/ folder
 add_subdirectory(${TESTS_DIR})
 
-#########
-# Examples - demo execs/programs to show usage of the libraries/utilities.
-#########
-
-set(EXAMPLES_DIR ${SOURCE_DIR}/examples)
 
 # Examples will use the latest build for the shared libraries
 link_directories(
-        ${CMAKE_BINARY_DIR}
+        ${CMAKE_BINARY_DIR}/lib
         ${INSTALL_DIR}/lib
 )
 
@@ -120,7 +135,7 @@ link_directories(
 include_directories(${INSTALL_DIR}/include)
 add_executable(server_demo
         ${SOURCES}
-        ${EXAMPLES_DIR}/server_demo.cpp
+        ${SOURCE_DIR}/examples/server_demo.cpp
 )
 target_link_libraries(server_demo
         ${LIBS}

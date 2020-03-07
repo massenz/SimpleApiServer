@@ -10,7 +10,7 @@ PROJECT_NAME = "SimpleApiServer"
 PROJECT_NUMBER = $(version)
 PROJECT_BRIEF = "A simple C++ REST Server"
 PROJECT_LOGO  = "docs/images/logo.png"
-OUTPUT_DIRECTORY = $(outdir)
+OUTPUT_DIRECTORY = "docs/apidocs"
 
 CREATE_SUBDIRS = NO
 ALLOW_UNICODE_NAMES = NO

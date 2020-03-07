@@ -8,6 +8,7 @@
 .settings/
 .conan/
 docs/html/
+docs/apidocs/
 
 # CMake files
 CMakeCache.txt
@@ -18,10 +19,7 @@ gen/
 
 # Build directories
 build/
-mac.build/
 Debug/
-.conan/
-mac.conan/
 
 # Compiler intermediate files
 .o
