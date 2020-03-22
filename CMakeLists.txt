@@ -57,6 +57,20 @@ set(TESTS_DIR ${PROJECT_SOURCE_DIR}/tests)
 set(PROTO_DIR ${PROJECT_SOURCE_DIR}/proto)
 set(PROJECT_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
 
+##
+# Depending on the build type (Debug/Release) Google Logging
+# generates a differently-named library.
+# Both the value of CMAKE_BUILD_TYPE and the `build_type` setting
+# in `~/.conan/profiles/default` need to match.
+#
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(GLOG glogd)
+else()
+    set(GLOG glog)
+endif()
+
+
 # Configure a header file to pass settings into source code.
 configure_file(
     ${SOURCE_DIR}/config.h.in
@@ -81,7 +95,7 @@ set(SOURCES
 )
 
 set(LIBS
-        glog
+        ${GLOG}
         microhttpd
         pthread
 )

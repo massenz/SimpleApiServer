@@ -38,7 +38,7 @@ add_executable(unit_tests
 )
 target_link_libraries(unit_tests
         ${GTEST}
-        glog
+        ${GLOG}
         http_parser
         microhttpd
         pthread
