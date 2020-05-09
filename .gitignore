@@ -20,6 +20,9 @@ gen/
 # Build directories
 build/
 Debug/
+cmake-build-debug/
+bin/build
+bin/test
 
 # Compiler intermediate files
 .o
@@ -27,4 +30,3 @@ Debug/
 .la
 .dylib
 bin/get_version
-

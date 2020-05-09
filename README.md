@@ -58,7 +58,7 @@ The `ApiServer` class adds utility methods to register handlers:
 ```
 
 A `Handler` receives a `Request` (containing, as appropriate, headers, query args and a body) and will return a `Response` (equally containing headers and a body, as well as a status code).
-  
+
 For an example of adding REST endpoints to your program, see the `server_demo.cpp` example:
 
 ```cpp
@@ -83,17 +83,36 @@ For an example of adding REST endpoints to your program, see the `server_demo.cp
 
   server.Start();
   ```
-  
+
 # API Documentation
 
 All the classes are documented using [Doxygen](http://www.doxygen.nl/); simply run
 
     $ doxygen
-    
+
 from the project's top directory, and the HTML docs will be installed in `docs/apidocs` (this folder is explicityly ignored by `git`).
 
 
 # Build & Test
+
+## Pre-requisites
+
+The scripts in this repository take advantage of shared common utility functions
+in [this common utils repository](https://bitbucket.org/marco/common-utils): clone it
+somewhere, and make `$COMMON_UTILS_DIR` point to it:
+
+```shell script
+git clone git@bitbucket.org:marco/common-utils.git
+export COMMON_UTILS_DIR="$(pwd)/common-utils"
+```
+
+To build/test the project, link to the scripts there:
+
+```shell script
+ln -s ${COMMON_UTILS_DIR}/build.sh bin/build
+ln -s ${COMMON_UTILS_DIR}/test.sh bin/test
+```
+
 
 ## Installation directory
 
@@ -119,14 +138,22 @@ make && make install
 See [the tutorial](https://www.gnu.org/software/libmicrohttpd/tutorial.html) for more information about usage.
 
 
-## Build & Test
+## Build, Test & Install
 
-To build and test it:
+To build the project:
 
-    $ ./bin/build && ./bin/test
+```shell script
+$ export INSTALL_DIR=/some/path
+$ ./bin/build && ./bin/test
+```
 
 or to simply run a subset of the tests with full debug logging:
 
-    $ ./bin/test -v --gtest_filter=FilterThis*
+    $ ./bin/test -v --gtest_filter="Simple*"
 
-A shared cmake utility functions file ([`common.cmake`](#)) will be included, if found in `${COMMON_UTILS_DIR}`.
+To install the generated binaries (`.so` or `.dylib` shared libraries)
+and headers so that other projects can find them:
+
+    $ cd build && make install
+
+See the scripts in the `${COMMON_UTILS_DIR}` folder for more options.
