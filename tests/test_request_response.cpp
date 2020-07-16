@@ -30,10 +30,11 @@ TEST(TestRequestResponse, testCreateRequest) {
 
 
 TEST(TestRequestResponse, testHeaders) {
-  auto response = Response::created();
-  response.AddHeader("Content-Type", "text/plain");
+  auto response = Response::created("http://foobar.com/location/1234");
 
-  ASSERT_EQ("text/plain", response.GetHeader("Content-Type"));
+  ASSERT_EQ("http://foobar.com/location/1234", response.GetHeader("Location"));
+
+  ASSERT_EQ(kApplicationJson, response.GetHeader(MHD_HTTP_HEADER_CONTENT_TYPE));
   ASSERT_EQ("", response.GetHeader("x-foo"));
 
   response.AddHeader("x-foo", "custom-header=211;x-len:776");
@@ -53,7 +54,7 @@ TEST(TestRequestResponse, testQueryArgs) {
 
 
 TEST(TestRequestResponse, testCopyConstructor) {
-  auto response = Response::created();
+  auto response = Response::created("/res/id/4999");
   response.AddHeader("Content-Type", "text/plain");
   response.AddHeader("Authorization", "user=foo:password=bar");
   response.AddHeader("x-foo", "custom-header=211;x-len:776");
@@ -65,6 +66,7 @@ TEST(TestRequestResponse, testCopyConstructor) {
   ASSERT_EQ("", other.body());
 
   ASSERT_EQ("text/plain", other.GetHeader("Content-Type"));
+  ASSERT_EQ("/res/id/4999", other.GetHeader("Location"));
   ASSERT_EQ("user=foo:password=bar", other.GetHeader("Authorization"));
   ASSERT_EQ("custom-header=211;x-len:776", other.GetHeader("x-foo"));
 }

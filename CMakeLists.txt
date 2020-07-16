@@ -12,8 +12,8 @@ include(${COMMON_UTILS_DIR}/commons.cmake OPTIONAL RESULT_VARIABLE COMMONS_FILE)
 
 # Version number
 set(RELEASE_MAJOR 0)
-set(RELEASE_MINOR 2)
-set(RELEASE_PATCH 1)
+set(RELEASE_MINOR 3)
+set(RELEASE_PATCH 0)
 
 IF (${COMMONS_FILE} STREQUAL NOTFOUND)
     message(WARNING "Not using CMake utilities")
@@ -96,6 +96,7 @@ set(SOURCES
 
 set(LIBS
         ${GLOG}
+        distutils
         microhttpd
         pthread
 )

@@ -37,7 +37,7 @@ protected:
     server_->AddPost("test", [] (const Request& request) -> Response {
       LOG(INFO) << "POST Handler for 'test' invoked with: "
                 << request.body();
-      return Response::created();
+      return Response::created("/test/1234");
     });
 
     server_->AddGet("body", [] (const Request& request) -> Response {
@@ -100,8 +100,8 @@ TEST_F(ApiServerTest, getValidEndpointReturns200) {
           FAIL() << "Could not connect to API Server: "
                  << err.message;
         }).on("response", [this](request::Response &&res) {
+          ASSERT_EQ(200, res.statusCode);
           EXPECT_EQ("application/json", res.headers["content-type"]);
-          EXPECT_EQ(200, res.statusCode);
         }).end();
   } catch (const std::exception &e) {
     FAIL() << e.what();
@@ -171,8 +171,8 @@ TEST_F(ApiServerTest, setHeaders) {
 
     server_->AddGet("headers", [](const Request &request) {
         auto response = Response::ok();
-        response.AddHeader("Content-Type", "plain/text");
-        response.AddHeader("x-custom", "custom-header:value");
+        response.AddHeader("x-Value", "Some-Files");
+        response.AddHeader("x-Custom", "Custom-Header:Value");
         return response;
     });
 
@@ -182,9 +182,12 @@ TEST_F(ApiServerTest, setHeaders) {
                     FAIL() << "Could not connect to API Server: "
                            << err.message;
                 }).on("response", [this](request::Response &&res) {
-                    EXPECT_EQ("plain/text", res.headers["content-type"]);
-                    EXPECT_EQ(200, res.statusCode);
-                    EXPECT_EQ("custom-header:value", res.headers["x-custom"]);
+                    ASSERT_EQ(200, res.statusCode);
+
+                    // NOTE: For unknown reasons, SimpleHttpRequest lowercases all header names
+                    EXPECT_EQ(kApplicationJson, res.headers["content-type"]);
+                    EXPECT_EQ("Custom-Header:Value", res.headers["x-custom"]);
+                    EXPECT_EQ("Some-Files", res.headers["x-value"]);
                 }).end();
     } catch (const std::exception &e) {
         FAIL() << e.what();
@@ -199,8 +202,8 @@ TEST_F(ApiServerTest, postContentType) {
           return Response::bad_request("Unexpected body: " + request.body());
         }
 
-        auto response = Response::created();
-        response.AddHeader("Content-Type", "plain/text");
+        auto response = Response::created("/entity/id/0990");
+        response.AddHeader(MHD_HTTP_HEADER_CONTENT_TYPE, "text/plain");
         response.set_body("plain text body");
         return response;
     });
@@ -211,8 +214,10 @@ TEST_F(ApiServerTest, postContentType) {
                     FAIL() << "Could not connect to API Server: "
                            << err.message;
                 }).on("response", [this](request::Response &&res) {
-                    EXPECT_EQ("plain/text", res.headers["content-type"]);
-                    EXPECT_EQ(201, res.statusCode);
+                    ASSERT_EQ(201, res.statusCode);
+
+                    EXPECT_EQ("text/plain", res.headers["content-type"]);
+                    EXPECT_EQ("/entity/id/0990", res.headers["location"]);
                     EXPECT_EQ("plain text body", res.str());
                 }).end();
     } catch (const std::exception &e) {

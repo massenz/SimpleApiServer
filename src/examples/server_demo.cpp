@@ -4,7 +4,6 @@
 
 #include <chrono>
 #include <iostream>
-#include <iomanip>
 #include <thread>
 
 #include <glog/logging.h>
@@ -15,7 +14,7 @@
 #include "version.h"
 
 #include "distlib/utils/ParseArgs.hpp"
-
+#include "distlib/utils/utils.hpp"
 
 namespace {
 
@@ -35,12 +34,12 @@ std::atomic<bool> stopped(false);
 } // namespace
 
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char **argv) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = true;
 
   ::utils::ParseArgs parser(argv, argc);
-  if (parser.enabled("debug")) {
+  if (parser.Enabled("debug")) {
     FLAGS_v = 2;
   }
 
@@ -49,7 +48,7 @@ int main(int argc, const char *argv[]) {
     return EXIT_SUCCESS;
   }
 
-  std::cout << "Server Demo - Rev. " << RELEASE_STR << std::endl;
+  ::utils::PrintVersion("Server Demo", RELEASE_STR);
   if (parser.has("version")) {
     return EXIT_SUCCESS;
   }
@@ -70,7 +69,7 @@ int main(int argc, const char *argv[]) {
     resp.AddHeader("Content-Type", "text/plain");
 
     if (!query.empty()) {
-      resp.set_body("Your query: " + query);
+      resp.set_body("Your query: " + query + "\nThe answer is: 42");
     } else {
       resp.set_body("Use the `q` query argument to ask me anything");
     }
@@ -78,7 +77,7 @@ int main(int argc, const char *argv[]) {
   });
   server.AddGet("stop", [=](const api::rest::Request& req) {
     ::stopped.store(true);
-    return api::rest::Response::ok();
+    return api::rest::Response::ok("Stopping server", true);
   });
 
   server.Start();

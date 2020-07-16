@@ -12,6 +12,7 @@ namespace rest {
 // Mark: CONSTANTS
 const char *const kApiVersionPrefix = "/api/v1";
 const char *const kApplicationJson = "application/json";
+const char *const kTextHtml = "text/html";
 const char *const kApplicationProtobuf = "application/x-protobuf";
 
 // Mark: ERROR CONSTANTS
@@ -121,10 +122,10 @@ int ApiServer::sendResponse(MHD_Connection *connection, const Response &response
 
   for(auto& header : response.headers()) {
     MHD_add_response_header(res, header.first.c_str(), header.second.c_str());
-
   }
 
   // The default Content-Type will be application/json, unless otherwise set in the handler.
+  // See BaseRequestResponse constructor.
   if (response.headers().count(MHD_HTTP_HEADER_CONTENT_TYPE) == 0) {
     MHD_add_response_header(res, MHD_HTTP_HEADER_CONTENT_TYPE, kApplicationJson);
   }

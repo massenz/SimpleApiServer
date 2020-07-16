@@ -14,6 +14,12 @@
 namespace api {
 namespace rest {
 
+extern const char *const kApiVersionPrefix;
+extern const char *const kApplicationJson;
+extern const char *const kTextHtml;
+extern const char *const kApplicationProtobuf;
+
+
 class HttpCannotStartError : public std::exception {
 };
 
@@ -33,19 +39,22 @@ class BaseRequestResponse {
 
   BaseRequestResponse() = default;
 
-  explicit BaseRequestResponse(std::string body) : body_(std::move(body)), headers_{} {}
+  explicit BaseRequestResponse(std::string body) : body_(std::move(body)), headers_{} {
+    // By default, we assume a Content-Type application/json.
+    headers_[MHD_HTTP_HEADER_CONTENT_TYPE] = kApplicationJson;
+  }
 
  public:
   BaseRequestResponse(const BaseRequestResponse &) = delete;
 
-  const std::string body() const { return body_; }
+  std::string body() const { return body_; }
 
   void set_body(const std::string &body) { body_ = body; }
 
   const Headers& headers() const { return headers_; }
 
   void AddHeader(const std::string &header, const std::string &value) {
-    headers_.insert(std::make_pair(header, value));
+    headers_[header] = value;
   }
 
   std::string GetHeader(const std::string &header) {
@@ -84,10 +93,10 @@ class Response : public BaseRequestResponse {
   std::string reason_;
 
  public:
-  Response(unsigned int status, const std::string &reason, const std::string &body = "") :
+  Response(unsigned int status, std::string reason, const std::string &body = "") :
       BaseRequestResponse{body},
       status_code_{status},
-      reason_{reason} {}
+      reason_{std::move(reason)} {}
 
   Response(const Response &other) : BaseRequestResponse{other.body_},
                                     status_code_{other.status_code_},
@@ -104,7 +113,20 @@ class Response : public BaseRequestResponse {
 
   static Response ok() { return Response(200, "OK"); }
 
-  static Response created() { return Response(201, "CREATED"); }
+  static Response ok(const std::string &body, bool as_plain_text = false) {
+    Response response(200, "OK");
+    if (as_plain_text) {
+      response.AddHeader(MHD_HTTP_HEADER_CONTENT_TYPE, kTextHtml);
+    }
+    response.set_body(body);
+    return response;
+  }
+
+  static Response created(const std::string& location) {
+    auto response = Response(201, "CREATED");
+    response.AddHeader("Location", location);
+    return response;
+  }
 
   static Response bad_request(const std::string &err_msg = "") {
     return Response(400, "BAD_REQUEST", err_msg);
@@ -120,7 +142,9 @@ using Handler = std::function<Response(const Request &)>;
 using ResourceHandlersMap = std::map<std::string, Handler>;
 
 /**
- * Implements a minimalist REST API for a `GossipFailureDetector` server.
+ * Simple Server, exposes an API as defined by the `Handler`s configured using
+ * `AddMethodHandler`, and its simplified "aliases" for each HTTP method.
+ *
  * Uses GNU `libmicrohttpd` as the underlying HTTP daemon.
  *
  * <p>In the current implementation it is uniquely associated with a reference to the
@@ -197,9 +221,9 @@ class ApiServer {
 
   std::ostream &ListAllHandlers(std::ostream &out) const {
     out << "====\nAll handlers for server on port: " << port_ << "\n====\n";
-    for (auto methodHandlers : handlers_) {
+    for (const auto& methodHandlers : handlers_) {
       out << "Method: " << methodHandlers.first << std::endl;
-      for (auto handler : methodHandlers.second) {
+      for (const auto& handler : methodHandlers.second) {
         out << "\t" << handler.first << std::endl;
       }
       out << "--\n";
